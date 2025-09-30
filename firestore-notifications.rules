@@ -1,0 +1,211 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for role checking
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && getUserRole() == role;
+    }
+    
+    function hasAnyRole(roles) {
+      return isAuthenticated() && getUserRole() in roles;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isPlacement() {
+      return hasRole('placement');
+    }
+    
+    function isMentor() {
+      return hasRole('mentor') || hasRole('faculty');
+    }
+    
+    function isStudent() {
+      return hasRole('student');
+    }
+
+    // Notifications collection rules
+    match /notifications/{notificationId} {
+      // Read: Users can only read their own notifications
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Create: Only system/admin can create notifications
+      // In practice, this will be done via Cloud Functions
+      allow create: if isAdmin() ||
+                       // Allow creation if it's for the authenticated user
+                       (isAuthenticated() && 
+                        request.resource.data.userId == request.auth.uid &&
+                        // Ensure required fields are present
+                        request.resource.data.keys().hasAll([
+                          'userId', 'type', 'category', 'priority', 
+                          'title', 'message', 'read', 'timestamp'
+                        ]) &&
+                        // Validate data types
+                        request.resource.data.userId is string &&
+                        request.resource.data.type is string &&
+                        request.resource.data.category is string &&
+                        request.resource.data.priority in ['low', 'medium', 'high'] &&
+                        request.resource.data.title is string &&
+                        request.resource.data.message is string &&
+                        request.resource.data.read is bool &&
+                        request.resource.data.timestamp is timestamp);
+      
+      // Update: Users can only update their own notifications (mark as read)
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       // Only allow updating read status and readAt timestamp
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['read', 'readAt']) &&
+                       // Ensure read is being set to true
+                       request.resource.data.read == true &&
+                       // Ensure readAt is a timestamp
+                       request.resource.data.readAt is timestamp;
+      
+      // Delete: Only admin can delete notifications
+      allow delete: if isAdmin();
+    }
+
+    // Notification templates (for system-wide notification configurations)
+    match /notificationTemplates/{templateId} {
+      // Read: All authenticated users can read templates
+      allow read: if isAuthenticated();
+      
+      // Write: Only admin can manage templates
+      allow write: if isAdmin();
+    }
+
+    // Notification settings (user preferences)
+    match /notificationSettings/{userId} {
+      // Read/Write: Users can only access their own settings
+      allow read, write: if isAuthenticated() && 
+                            request.auth.uid == userId;
+    }
+
+    // Notification statistics (for analytics)
+    match /notificationStats/{statId} {
+      // Read: Admin and placement can read stats
+      allow read: if hasAnyRole(['admin', 'placement']);
+      
+      // Write: Only system/admin can write stats
+      allow write: if isAdmin();
+    }
+
+    // User profiles (needed for notification targeting)
+    match /users/{userId} {
+      // Read: Users can read their own profile, admin/placement can read all
+      allow read: if isOwner(userId) || 
+                     hasAnyRole(['admin', 'placement']);
+      
+      // Write: Users can update their own profile
+      allow write: if isOwner(userId);
+    }
+
+    // Applications (for application-related notifications)
+    match /applications/{applicationId} {
+      // Read: Student (owner), mentor, placement, admin can read
+      allow read: if isAuthenticated() && (
+                     resource.data.studentId == request.auth.uid ||
+                     resource.data.mentorId == request.auth.uid ||
+                     hasAnyRole(['placement', 'admin'])
+                   );
+      
+      // Write: Student (owner), mentor, placement can write
+      allow write: if isAuthenticated() && (
+                      resource.data.studentId == request.auth.uid ||
+                      resource.data.mentorId == request.auth.uid ||
+                      hasAnyRole(['placement', 'admin'])
+                    );
+    }
+
+    // Internships (for internship-related notifications)
+    match /internships/{internshipId} {
+      // Read: All authenticated users can read internships
+      allow read: if isAuthenticated();
+      
+      // Write: Only placement and admin can write
+      allow write: if hasAnyRole(['placement', 'admin']);
+    }
+
+    // Interviews (for interview-related notifications)
+    match /interviews/{interviewId} {
+      // Read: Participants and admin/placement can read
+      allow read: if isAuthenticated() && (
+                     request.auth.uid in resource.data.participants ||
+                     hasAnyRole(['placement', 'admin'])
+                   );
+      
+      // Write: Placement and admin can write
+      allow write: if hasAnyRole(['placement', 'admin']);
+    }
+
+    // Certificates (for certificate-related notifications)
+    match /certificates/{certificateId} {
+      // Read: Student (owner), mentor, placement, admin can read
+      allow read: if isAuthenticated() && (
+                     resource.data.studentId == request.auth.uid ||
+                     resource.data.mentorId == request.auth.uid ||
+                     hasAnyRole(['placement', 'admin'])
+                   );
+      
+      // Write: Mentor, placement, admin can write
+      allow write: if isAuthenticated() && (
+                      resource.data.mentorId == request.auth.uid ||
+                      hasAnyRole(['placement', 'admin'])
+                    );
+    }
+
+    // Feedback (for feedback-related notifications)
+    match /feedback/{feedbackId} {
+      // Read: Student (owner), mentor, placement, admin can read
+      allow read: if isAuthenticated() && (
+                     resource.data.studentId == request.auth.uid ||
+                     resource.data.mentorId == request.auth.uid ||
+                     hasAnyRole(['placement', 'admin'])
+                   );
+      
+      // Write: Mentor can write feedback
+      allow write: if isAuthenticated() && 
+                      resource.data.mentorId == request.auth.uid;
+    }
+
+    // Doubts (for doubt-related notifications)
+    match /doubts/{doubtId} {
+      // Read: All authenticated users can read doubts
+      allow read: if isAuthenticated();
+      
+      // Write: Students can create, all can answer
+      allow write: if isAuthenticated();
+    }
+
+    // Mock tests (for test-related notifications)
+    match /mockTests/{testId} {
+      // Read: All authenticated users can read
+      allow read: if isAuthenticated();
+      
+      // Write: Students can write their own tests
+      allow write: if isAuthenticated() && 
+                      resource.data.studentId == request.auth.uid;
+    }
+
+    // Default deny rule for any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,262 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for role checking
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function getUserRole() {
+      return getUserData().role;
+    }
+    
+    function isApproved() {
+      return getUserData().approved == true;
+    }
+    
+    function hasRole(role) {
+      return getUserRole() == role;
+    }
+    
+    function hasAnyRole(roles) {
+      return getUserRole() in roles;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isPlacement() {
+      return hasRole('placement');
+    }
+    
+    function isStudent() {
+      return hasRole('student');
+    }
+    
+    function isFaculty() {
+      return hasRole('faculty');
+    }
+    
+    function isRecruiter() {
+      return hasRole('recruiter');
+    }
+    
+    function canApproveRoles() {
+      return hasAnyRole(['admin', 'placement']);
+    }
+    
+    // Users collection rules
+    match /users/{userId} {
+      // Users can read their own profile
+      // Admins and placement can read all profiles
+      // Faculty can read student profiles
+      // Recruiters can read approved student profiles (anonymized)
+      allow read: if isAuthenticated() && (
+        isOwner(userId) ||
+        isAdmin() ||
+        isPlacement() ||
+        (isFaculty() && resource.data.role == 'student') ||
+        (isRecruiter() && isApproved() && resource.data.role == 'student' && resource.data.approved == true)
+      );
+      
+      // Users can create their own profile during signup
+      allow create: if isAuthenticated() && isOwner(userId) && 
+        // Ensure required fields are present
+        request.resource.data.keys().hasAll(['uid', 'email', 'name', 'role', 'approved', 'createdAt']) &&
+        // Ensure uid matches the document ID
+        request.resource.data.uid == userId &&
+        // Ensure email matches auth email
+        request.resource.data.email == request.auth.token.email &&
+        // New users start as pending
+        request.resource.data.role == 'pending' &&
+        request.resource.data.approved == false;
+      
+      // Users can update their own profile (limited fields)
+      // Admins and placement can update any profile
+      allow update: if isAuthenticated() && (
+        (isOwner(userId) && 
+         // Users can only update specific fields
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'name', 'phone', 'department', 'year', 'rollNumber', 'skills', 
+           'resumeUrl', 'avatarUrl', 'updatedAt'
+         ]) &&
+         // Users cannot change their role or approval status
+         request.resource.data.role == resource.data.role &&
+         request.resource.data.approved == resource.data.approved
+        ) ||
+        // Admins and placement can update role and approval fields
+        (canApproveRoles() && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'role', 'approved', 'requestedRole', 'approvedAt', 'approvedBy', 
+           'rejectedAt', 'rejectedBy', 'updatedAt'
+         ])
+        )
+      );
+      
+      // Only admins can delete user profiles
+      allow delete: if isAdmin();
+    }
+    
+    // Applications collection rules
+    match /applications/{applicationId} {
+      // Students can read their own applications
+      // Faculty, placement, and admins can read all applications
+      // Recruiters can read applications for their internships
+      allow read: if isAuthenticated() && isApproved() && (
+        isOwner(resource.data.studentId) ||
+        hasAnyRole(['faculty', 'placement', 'admin']) ||
+        (isRecruiter() && resource.data.recruiterId == request.auth.uid)
+      );
+      
+      // Only approved students can create applications
+      allow create: if isAuthenticated() && isStudent() && isApproved() &&
+        request.resource.data.studentId == request.auth.uid &&
+        request.resource.data.keys().hasAll(['studentId', 'internshipId', 'status', 'appliedAt']);
+      
+      // Students can update their own applications (limited fields)
+      // Faculty, placement, and recruiters can update application status
+      allow update: if isAuthenticated() && isApproved() && (
+        (isStudent() && isOwner(resource.data.studentId) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt'])
+        ) ||
+        (hasAnyRole(['faculty', 'placement', 'admin']) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedBy', 'reviewedAt', 'notes', 'updatedAt'])
+        ) ||
+        (isRecruiter() && resource.data.recruiterId == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedBy', 'reviewedAt', 'notes', 'updatedAt'])
+        )
+      );
+      
+      // Only admins can delete applications
+      allow delete: if isAdmin();
+    }
+    
+    // Internships collection rules
+    match /internships/{internshipId} {
+      // All authenticated and approved users can read internships
+      allow read: if isAuthenticated() && isApproved();
+      
+      // Only approved recruiters, placement, and admins can create internships
+      allow create: if isAuthenticated() && isApproved() && 
+        hasAnyRole(['recruiter', 'placement', 'admin']) &&
+        request.resource.data.keys().hasAll(['title', 'company', 'description', 'requirements', 'createdBy', 'createdAt', 'status']) &&
+        request.resource.data.createdBy == request.auth.uid;
+      
+      // Recruiters can update their own internships
+      // Placement and admins can update any internship
+      allow update: if isAuthenticated() && isApproved() && (
+        (isRecruiter() && resource.data.createdBy == request.auth.uid) ||
+        hasAnyRole(['placement', 'admin'])
+      );
+      
+      // Only placement and admins can delete internships
+      allow delete: if isAuthenticated() && hasAnyRole(['placement', 'admin']);
+    }
+    
+    // Mock tests collection rules (from existing system)
+    match /mockTests/{testId} {
+      // Students can read and create their own test attempts
+      allow read, create: if isAuthenticated() && isStudent() && isApproved() &&
+        request.resource.data.studentId == request.auth.uid;
+      
+      // Faculty, placement, and admins can read all tests
+      allow read: if isAuthenticated() && hasAnyRole(['faculty', 'placement', 'admin']);
+      
+      // Only admins can delete tests
+      allow delete: if isAdmin();
+    }
+    
+    // Doubts collection rules (from existing system)
+    match /doubts/{doubtId} {
+      // All authenticated and approved users can read doubts
+      allow read: if isAuthenticated() && isApproved();
+      
+      // Students can create doubts
+      allow create: if isAuthenticated() && isStudent() && isApproved() &&
+        request.resource.data.authorId == request.auth.uid;
+      
+      // Authors can update their own doubts
+      // Faculty and admins can update any doubt
+      allow update: if isAuthenticated() && isApproved() && (
+        resource.data.authorId == request.auth.uid ||
+        hasAnyRole(['faculty', 'admin'])
+      );
+      
+      // Only admins can delete doubts
+      allow delete: if isAdmin();
+    }
+    
+    // Answers collection rules (from existing system)
+    match /answers/{answerId} {
+      // All authenticated and approved users can read answers
+      allow read: if isAuthenticated() && isApproved();
+      
+      // Approved users can create answers
+      allow create: if isAuthenticated() && isApproved() &&
+        request.resource.data.authorId == request.auth.uid;
+      
+      // Authors can update their own answers
+      // Faculty and admins can update any answer
+      allow update: if isAuthenticated() && isApproved() && (
+        resource.data.authorId == request.auth.uid ||
+        hasAnyRole(['faculty', 'admin'])
+      );
+      
+      // Only admins can delete answers
+      allow delete: if isAdmin();
+    }
+    
+    // Notifications collection rules
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // System can create notifications (via Cloud Functions)
+      // Users can update their own notifications (mark as read)
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Approval logs (admin only)
+    match /approvalLogs/{logId} {
+      allow read: if isAuthenticated() && hasAnyRole(['placement', 'admin']);
+      // Creation handled by Cloud Functions only
+    }
+    
+    // Revocation logs (admin only)
+    match /revocationLogs/{logId} {
+      allow read: if isAuthenticated() && isAdmin();
+      // Creation handled by Cloud Functions only
+    }
+    
+    // System settings (admin only)
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+    
+    // Analytics data (placement and admin only)
+    match /analytics/{analyticsId} {
+      allow read: if isAuthenticated() && hasAnyRole(['placement', 'admin']);
+      // Creation handled by Cloud Functions only
+    }
+    
+    // Default deny rule for any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

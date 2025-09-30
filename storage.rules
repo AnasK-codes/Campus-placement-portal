@@ -1,0 +1,134 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+    
+    function isApproved() {
+      return request.auth.token.approved == true;
+    }
+    
+    function hasRole(role) {
+      return getUserRole() == role;
+    }
+    
+    function hasAnyRole(roles) {
+      return getUserRole() in roles;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isValidImageFile() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 5 * 1024 * 1024; // 5MB limit
+    }
+    
+    function isValidDocumentFile() {
+      return request.resource.contentType in ['application/pdf', 'application/msword', 
+             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'] &&
+             request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+    
+    // User profile pictures
+    match /avatars/{userId}/{fileName} {
+      // Users can upload their own avatar
+      // Admins can upload any avatar
+      allow write: if isAuthenticated() && (
+        (isOwner(userId) && isValidImageFile()) ||
+        (hasRole('admin') && isValidImageFile())
+      );
+      
+      // Anyone can read avatars (public)
+      allow read: if true;
+    }
+    
+    // User resumes
+    match /resumes/{userId}/{fileName} {
+      // Users can upload their own resume
+      // Admins can upload any resume
+      allow write: if isAuthenticated() && (
+        (isOwner(userId) && isValidDocumentFile()) ||
+        (hasRole('admin') && isValidDocumentFile())
+      );
+      
+      // Users can read their own resume
+      // Faculty, placement, recruiters, and admins can read student resumes
+      allow read: if isAuthenticated() && (
+        isOwner(userId) ||
+        hasAnyRole(['faculty', 'placement', 'recruiter', 'admin'])
+      );
+    }
+    
+    // Internship attachments
+    match /internships/{internshipId}/{fileName} {
+      // Recruiters can upload attachments for their internships
+      // Placement and admins can upload for any internship
+      allow write: if isAuthenticated() && isApproved() && 
+        hasAnyRole(['recruiter', 'placement', 'admin']) &&
+        (isValidImageFile() || isValidDocumentFile());
+      
+      // All authenticated users can read internship attachments
+      allow read: if isAuthenticated() && isApproved();
+    }
+    
+    // Application attachments
+    match /applications/{applicationId}/{fileName} {
+      // Students can upload attachments for their applications
+      // Faculty, placement, and admins can upload for any application
+      allow write: if isAuthenticated() && isApproved() && (
+        (hasRole('student') && (isValidImageFile() || isValidDocumentFile())) ||
+        (hasAnyRole(['faculty', 'placement', 'admin']) && (isValidImageFile() || isValidDocumentFile()))
+      );
+      
+      // Students can read their own application attachments
+      // Faculty, placement, recruiters, and admins can read all application attachments
+      allow read: if isAuthenticated() && isApproved() && 
+        hasAnyRole(['student', 'faculty', 'placement', 'recruiter', 'admin']);
+    }
+    
+    // Doubt attachments (from existing system)
+    match /doubts/{doubtId}/{fileName} {
+      // Students can upload attachments for their doubts
+      // Faculty and admins can upload for any doubt
+      allow write: if isAuthenticated() && isApproved() && (
+        (hasRole('student') && (isValidImageFile() || isValidDocumentFile())) ||
+        (hasAnyRole(['faculty', 'admin']) && (isValidImageFile() || isValidDocumentFile()))
+      );
+      
+      // All authenticated and approved users can read doubt attachments
+      allow read: if isAuthenticated() && isApproved();
+    }
+    
+    // System files (admin only)
+    match /system/{fileName} {
+      allow read, write: if isAuthenticated() && hasRole('admin');
+    }
+    
+    // Temporary uploads (24 hour expiry)
+    match /temp/{userId}/{fileName} {
+      // Users can upload to their temp folder
+      allow write: if isAuthenticated() && isOwner(userId) &&
+        (isValidImageFile() || isValidDocumentFile());
+      
+      // Users can read their own temp files
+      // Admins can read any temp files
+      allow read: if isAuthenticated() && (
+        isOwner(userId) || hasRole('admin')
+      );
+    }
+    
+    // Default deny rule
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
