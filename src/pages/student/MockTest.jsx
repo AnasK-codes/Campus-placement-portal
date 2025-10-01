@@ -102,12 +102,12 @@ const TestInfo = styled.div`
 
 const ActionButton = styled(motion.button)`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
-  background: ${({ theme, variant }) => 
-    variant === 'primary' ? theme.colors.gradient : theme.colors.surface};
-  color: ${({ theme, variant }) => 
-    variant === 'primary' ? 'white' : theme.colors.text};
-  border: 2px solid ${({ theme, variant }) => 
-    variant === 'primary' ? theme.colors.primary : theme.colors.border};
+  background: ${({ theme, $variant }) => 
+    $variant === 'primary' ? theme.colors.gradient : theme.colors.surface};
+  color: ${({ theme, $variant }) => 
+    $variant === 'primary' ? 'white' : theme.colors.text};
+  border: 2px solid ${({ theme, $variant }) => 
+    $variant === 'primary' ? theme.colors.primary : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   font-weight: 600;
   cursor: pointer;
@@ -131,23 +131,23 @@ const ResultsCard = styled(motion.div)`
   padding: ${({ theme }) => theme.spacing.xxl};
   box-shadow: ${({ theme }) => theme.shadows.lg};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  text-align: center;
 `;
 
 const ScoreDisplay = styled.div`
   font-size: 3rem;
   font-weight: 700;
-  color: ${({ theme, score }) => {
-    if (score >= 80) return '#4caf50';
-    if (score >= 60) return '#ff9800';
-    return '#f44336';
+  color: ${({ theme, $score }) => {
+    if ($score >= 80) return theme.colors.success;
+    if ($score >= 60) return theme.colors.warning;
+    return theme.colors.error;
   }};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
 
 const ScoreLabel = styled.p`
   font-size: 1.2rem;
   color: ${({ theme }) => theme.colors.textSecondary};
+{{ ... }}
   margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
 
@@ -334,7 +334,7 @@ const MockTest = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <ScoreDisplay score={score}>
+            <ScoreDisplay $score={score}>
               {score}%
             </ScoreDisplay>
             <ScoreLabel>
@@ -353,7 +353,7 @@ const MockTest = () => {
             </div>
 
             <ActionButton
-              variant="primary"
+              $variant="primary"
               onClick={resetTest}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -418,7 +418,7 @@ const MockTest = () => {
                   📝 {mockQuestions[category].length} Questions • ⏱️ 10 Minutes
                 </p>
                 <ActionButton
-                  variant="primary"
+                  $variant="primary"
                   onClick={() => startTest(category)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -508,7 +508,7 @@ const MockTest = () => {
 
               {currentQuestion === questions.length - 1 ? (
                 <ActionButton
-                  variant="primary"
+                  $variant="primary"
                   onClick={submitTest}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -517,7 +517,7 @@ const MockTest = () => {
                 </ActionButton>
               ) : (
                 <ActionButton
-                  variant="primary"
+                  $variant="primary"
                   onClick={nextQuestion}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

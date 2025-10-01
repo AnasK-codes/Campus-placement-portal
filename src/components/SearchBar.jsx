@@ -28,12 +28,12 @@ const SearchInputWrapper = styled.div`
   display: flex;
   align-items: center;
   background: ${({ theme }) => theme.colors.background};
-  border: 2px solid ${({ theme, focused }) => focused ? theme.colors.primary : theme.colors.border};
+  border: 2px solid ${({ theme, $focused }) => $focused ? theme.colors.primary : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
   transition: all ${({ theme }) => theme.transitions.fast};
   overflow: hidden;
 
-  ${({ focused }) => focused && `
+  ${({ $focused }) => $focused && `
     animation: ${glow} 2s infinite;
   `}
 
@@ -45,7 +45,7 @@ const SearchInputWrapper = styled.div`
 
 const SearchIcon = styled(motion.div)`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  color: ${({ theme, focused }) => focused ? theme.colors.primary : theme.colors.textSecondary};
+  color: ${({ theme, $focused }) => $focused ? theme.colors.primary : theme.colors.textSecondary};
   font-size: 1.2rem;
   transition: color ${({ theme }) => theme.transitions.fast};
   cursor: pointer;
@@ -343,9 +343,9 @@ const SearchBar = ({
       animate="visible"
       {...props}
     >
-      <SearchInputWrapper focused={focused}>
+      <SearchInputWrapper $focused={focused}>
         <SearchIcon
-          focused={focused}
+          $focused={focused}
           variants={searchIconVariants}
           animate={value ? 'searching' : 'idle'}
           transition={{ duration: 0.3 }}

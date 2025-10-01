@@ -120,6 +120,10 @@ const RecruiterDashboard = () => {
     { icon: '🏢', title: 'Company Profile', description: 'Update company information and branding' }
   ];
 
+  const handleActionClick = () => {
+    alert('🚧 Coming Soon!\n\nThis feature is currently under development and will be available in the next update.\n\nIn the meantime, you can contact the placement office for assistance with recruitment activities.');
+  };
+
   return (
     <DashboardContainer>
       <DashboardHeader>
@@ -151,6 +155,7 @@ const RecruiterDashboard = () => {
             key={index}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={handleActionClick}
           >
             <ActionIcon>{action.icon}</ActionIcon>
             <ActionTitle>{action.title}</ActionTitle>

@@ -9,10 +9,10 @@ import ProgressBar from './ProgressBar';
 const CardContainer = styled(motion.div)`
   background: ${({ theme }) => theme.colors.background};
   border-radius: ${({ theme }) => theme.borderRadius.xl};
-  border: 2px solid ${({ matchScore }) => {
-    if (matchScore >= 80) return '#4CAF50';
-    if (matchScore >= 60) return '#FF9800';
-    if (matchScore >= 40) return '#2196F3';
+  border: 2px solid ${({ $matchScore }) => {
+    if ($matchScore >= 80) return '#4CAF50';
+    if ($matchScore >= 60) return '#FF9800';
+    if ($matchScore >= 40) return '#2196F3';
     return '#9E9E9E';
   }};
   padding: ${({ theme }) => theme.spacing.xl};
@@ -28,10 +28,10 @@ const CardContainer = styled(motion.div)`
     left: 0;
     right: 0;
     height: 4px;
-    background: ${({ matchScore }) => {
-      if (matchScore >= 80) return 'linear-gradient(90deg, #4CAF50, #66BB6A)';
-      if (matchScore >= 60) return 'linear-gradient(90deg, #FF9800, #FFB74D)';
-      if (matchScore >= 40) return 'linear-gradient(90deg, #2196F3, #64B5F6)';
+    background: ${({ $matchScore }) => {
+      if ($matchScore >= 80) return 'linear-gradient(90deg, #4CAF50, #66BB6A)';
+      if ($matchScore >= 60) return 'linear-gradient(90deg, #FF9800, #FFB74D)';
+      if ($matchScore >= 40) return 'linear-gradient(90deg, #2196F3, #64B5F6)';
       return 'linear-gradient(90deg, #9E9E9E, #BDBDBD)';
     }};
   }
@@ -83,10 +83,10 @@ const RoleName = styled.h4`
 `;
 
 const MatchBadge = styled(motion.div)`
-  background: ${({ matchScore }) => {
-    if (matchScore >= 80) return 'linear-gradient(135deg, #4CAF50, #66BB6A)';
-    if (matchScore >= 60) return 'linear-gradient(135deg, #FF9800, #FFB74D)';
-    if (matchScore >= 40) return 'linear-gradient(135deg, #2196F3, #64B5F6)';
+  background: ${({ $matchScore }) => {
+    if ($matchScore >= 80) return 'linear-gradient(135deg, #4CAF50, #66BB6A)';
+    if ($matchScore >= 60) return 'linear-gradient(135deg, #FF9800, #FFB74D)';
+    if ($matchScore >= 40) return 'linear-gradient(135deg, #2196F3, #64B5F6)';
     return 'linear-gradient(135deg, #9E9E9E, #BDBDBD)';
   }};
   color: white;
@@ -121,10 +121,10 @@ const MatchProgress = styled.div`
 
     .percentage {
       font-weight: 700;
-      color: ${({ matchScore }) => {
-        if (matchScore >= 80) return '#4CAF50';
-        if (matchScore >= 60) return '#FF9800';
-        if (matchScore >= 40) return '#2196F3';
+      color: ${({ $matchScore }) => {
+        if ($matchScore >= 80) return '#4CAF50';
+        if ($matchScore >= 60) return '#FF9800';
+        if ($matchScore >= 40) return '#2196F3';
         return '#9E9E9E';
       }};
     }
@@ -414,7 +414,7 @@ const RecommendedInternshipCard = ({ internship, studentProfile, onApply, onView
 
   return (
     <CardContainer
-      matchScore={internship.matchScore}
+      $matchScore={internship.matchScore}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -424,7 +424,6 @@ const RecommendedInternshipCard = ({ internship, studentProfile, onApply, onView
       <AIMascot
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        whileHover={{ scale: 1.1, rotate: 10 }}
         whileTap={{ scale: 0.9 }}
       >
         🤖
@@ -497,7 +496,7 @@ const RecommendedInternshipCard = ({ internship, studentProfile, onApply, onView
           <RoleName>{internship.role}</RoleName>
         </CompanyInfo>
         <MatchBadge
-          matchScore={internship.matchScore}
+          $matchScore={internship.matchScore}
           whileHover={{ scale: 1.05 }}
         >
           <span className="icon">{matchInfo.icon}</span>
@@ -506,7 +505,7 @@ const RecommendedInternshipCard = ({ internship, studentProfile, onApply, onView
       </CardHeader>
 
       {/* Match Progress */}
-      <MatchProgress matchScore={internship.matchScore}>
+      <MatchProgress $matchScore={internship.matchScore}>
         <div className="progress-header">
           <span className="label">{matchInfo.label}</span>
           <span className="percentage">{internship.matchScore}%</span>

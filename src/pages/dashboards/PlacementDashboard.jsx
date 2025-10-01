@@ -120,6 +120,10 @@ const PlacementDashboard = () => {
     { icon: '📅', title: 'Schedule Drives', description: 'Organize campus recruitment drives' }
   ];
 
+  const handleActionClick = () => {
+    alert('🚧 Coming Soon!\n\nThis feature is currently under development and will be available in the next update.\n\nFor immediate assistance, please contact the system administrator.');
+  };
+
   return (
     <DashboardContainer>
       <DashboardHeader>
@@ -151,6 +155,7 @@ const PlacementDashboard = () => {
             key={index}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={handleActionClick}
           >
             <ActionIcon>{action.icon}</ActionIcon>
             <ActionTitle>{action.title}</ActionTitle>

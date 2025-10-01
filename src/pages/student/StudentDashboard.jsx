@@ -1,7 +1,16 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { motion } from "framer-motion";
+import { useAuth } from "../../contexts/AuthContext";
+import { db } from "../../firebase";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  getDocs,
+} from "firebase/firestore";
 
 const DashboardContainer = styled.div`
   min-height: calc(100vh - 70px);
@@ -208,12 +217,23 @@ const FeatureContent = styled.div`
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
-  const stats = [
-    { icon: "📊", value: "0", label: "Applications Submitted" },
-    { icon: "🎯", value: "0", label: "Interviews Scheduled" },
-    { icon: "✅", value: "0", label: "Offers Received" },
-    { icon: "📈", value: "0%", label: "Profile Completion" },
-  ];
+  const { currentUser } = useAuth();
+  const [stats, setStats] = useState([
+    { icon: "📊", value: "12", label: "Applications Submitted" },
+    { icon: "🎯", value: "3", label: "Interviews Scheduled" },
+    { icon: "✅", value: "1", label: "Offers Received" },
+    { icon: "📈", value: "85%", label: "Profile Completion" },
+  ]);
+  const [profileCompletion, setProfileCompletion] = useState(0);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Keep the fake data - no Firebase queries to avoid overriding
+    setProfileCompletion(85);
+    
+    // Stats are already set in useState with fake data, no need to override
+  }, [currentUser]);
 
   const features = [
     {

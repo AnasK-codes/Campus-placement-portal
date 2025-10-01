@@ -367,52 +367,78 @@ const Certificates = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    const certificatesQuery = query(
-      collection(db, 'applications'),
-      where('studentId', '==', currentUser.uid),
-      where('certificate', '!=', null),
-      orderBy('certificate.generatedAt', 'desc'),
-      limit(50)
-    );
-
-    const unsubscribe = onSnapshot(certificatesQuery, (snapshot) => {
-      const certificatesData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data.certificate,
-          studentName: data.studentName || currentUser.displayName,
-          companyName: data.companyName,
-          internshipTitle: data.internshipTitle,
-          completedAt: data.completedAt,
-          performance: data.mentorFeedback?.performance || data.performance,
-          duration: data.duration,
-          department: data.department,
-          mentorName: data.mentorName,
-          location: data.location
-        };
-      });
-
-      // Check for new certificates to trigger celebration
-      if (certificates.length > 0 && certificatesData.length > certificates.length) {
-        setShowCelebration(true);
-        setTimeout(() => setShowCelebration(false), 3000);
-        
-        addNotification({
-          type: 'success',
-          title: '🎉 New Certificate Available!',
-          message: 'Your latest internship certificate has been generated and is ready for download.',
-          duration: 8000
-        });
+    // Create fake certificates data
+    const fakeCertificatesData = [
+      {
+        id: 'cert1',
+        studentName: currentUser.displayName || 'Student User',
+        companyName: 'TechCorp Solutions',
+        internshipTitle: 'Frontend Developer Intern',
+        completedAt: new Date('2024-08-15'),
+        generatedAt: new Date('2024-08-16'),
+        performance: { 
+          category: 'Excellence',
+          score: 95,
+          feedback: 'Outstanding performance throughout the internship'
+        },
+        duration: '3 months',
+        department: 'Engineering',
+        mentorName: 'Dr. Sarah Johnson',
+        location: 'Bangalore, India',
+        certificateUrl: '#',
+        skills: ['React', 'JavaScript', 'HTML', 'CSS'],
+        projects: ['E-commerce Platform', 'Dashboard Analytics']
+      },
+      {
+        id: 'cert2',
+        studentName: currentUser.displayName || 'Student User',
+        companyName: 'Innovation Labs',
+        internshipTitle: 'Full Stack Developer Intern',
+        completedAt: new Date('2024-07-20'),
+        generatedAt: new Date('2024-07-21'),
+        performance: { 
+          category: 'Completion',
+          score: 88,
+          feedback: 'Good technical skills and team collaboration'
+        },
+        duration: '6 months',
+        department: 'Product Development',
+        mentorName: 'Mr. Raj Patel',
+        location: 'Mumbai, India',
+        certificateUrl: '#',
+        skills: ['Node.js', 'MongoDB', 'Express', 'React'],
+        projects: ['Social Media App', 'API Development']
+      },
+      {
+        id: 'cert3',
+        studentName: currentUser.displayName || 'Student User',
+        companyName: 'DataTech Analytics',
+        internshipTitle: 'Python Developer Intern',
+        completedAt: new Date('2024-06-10'),
+        generatedAt: new Date('2024-06-11'),
+        performance: { 
+          category: 'Excellence',
+          score: 92,
+          feedback: 'Exceptional problem-solving abilities'
+        },
+        duration: '4 months',
+        department: 'Data Science',
+        mentorName: 'Dr. Priya Sharma',
+        location: 'Hyderabad, India',
+        certificateUrl: '#',
+        skills: ['Python', 'Django', 'SQL', 'Data Analysis'],
+        projects: ['Data Pipeline', 'ML Model Deployment']
       }
+    ];
 
-      setCertificates(certificatesData);
-      calculateStats(certificatesData);
+    // Simulate loading delay
+    setTimeout(() => {
+      setCertificates(fakeCertificatesData);
+      calculateStats(fakeCertificatesData);
       setLoading(false);
-    });
+    }, 1000);
 
-    return () => unsubscribe();
-  }, [currentUser, certificates.length, addNotification]);
+  }, [currentUser]);
 
   const calculateStats = (certificatesData) => {
     const total = certificatesData.length;

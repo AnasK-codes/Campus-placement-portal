@@ -112,13 +112,37 @@ const FacultyDashboard = () => {
   ];
 
   const quickActions = [
-    { icon: '👥', title: 'View My Students', description: 'Monitor student progress and profiles' },
-    { icon: '📝', title: 'Review Applications', description: 'Approve or reject student applications' },
-    { icon: '📊', title: 'Student Analytics', description: 'View detailed student performance metrics' },
-    { icon: '💼', title: 'Mentorship', description: 'Provide guidance and career counseling' },
-    { icon: '📧', title: 'Send Updates', description: 'Communicate with students and placement team' },
-    { icon: '📅', title: 'Schedule Meetings', description: 'Book one-on-one sessions with students' }
+    { icon: '👥', title: 'View My Students', description: 'Monitor student progress and profiles', hasData: true },
+    { icon: '📝', title: 'Review Applications', description: 'Approve or reject student applications', hasData: false },
+    { icon: '📊', title: 'Student Analytics', description: 'View detailed student performance metrics', hasData: false },
+    { icon: '💼', title: 'Mentorship', description: 'Provide guidance and career counseling', hasData: false },
+    { icon: '📧', title: 'Send Updates', description: 'Communicate with students and placement team', hasData: false },
+    { icon: '📅', title: 'Schedule Meetings', description: 'Book one-on-one sessions with students', hasData: false }
   ];
+
+  const handleActionClick = (action) => {
+    if (action.hasData) {
+      // Show fake student data
+      alert(`Students under your guidance:
+
+📚 Computer Science Department:
+• John Doe (CS2021001) - 3rd Year
+• Jane Smith (CS2021045) - 4th Year  
+• Alex Kumar (CS2021078) - 2nd Year
+
+📊 Current Status:
+• 15 students actively applying for internships
+• 8 students with pending applications
+• 5 students already placed
+
+🎯 Recent Activities:
+• 3 applications approved this week
+• 2 mentorship sessions scheduled
+• 1 placement offer received`);
+    } else {
+      alert('🚧 Coming Soon!\n\nThis feature is currently under development and will be available in the next update.');
+    }
+  };
 
   return (
     <DashboardContainer>
@@ -151,6 +175,7 @@ const FacultyDashboard = () => {
             key={index}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => handleActionClick(action)}
           >
             <ActionIcon>{action.icon}</ActionIcon>
             <ActionTitle>{action.title}</ActionTitle>

@@ -332,22 +332,85 @@ const RoleApprovals = () => {
   useEffect(() => {
     if (!canAccess || !currentUser) return;
 
-    const fetchRequests = async () => {
-      try {
-        const requestsData = await getRoleApprovalRequests();
-        setRequests(requestsData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching role approval requests:', error);
-        setLoading(false);
+    // Create fake role approval requests
+    const fakeRequests = [
+      {
+        id: 'req1',
+        userId: 'user1',
+        userEmail: 'john.doe@university.edu',
+        requestedRole: VALID_ROLES.STUDENT,
+        status: 'pending',
+        createdAt: new Date('2024-09-28'),
+        additionalInfo: {
+          name: 'John Doe',
+          studentId: 'CS2021001',
+          department: 'Computer Science',
+          year: '3rd Year'
+        }
+      },
+      {
+        id: 'req2',
+        userId: 'user2',
+        userEmail: 'jane.smith@university.edu',
+        requestedRole: VALID_ROLES.STUDENT,
+        status: 'pending',
+        createdAt: new Date('2024-09-27'),
+        additionalInfo: {
+          name: 'Jane Smith',
+          studentId: 'EC2021045',
+          department: 'Electronics',
+          year: '4th Year'
+        }
+      },
+      {
+        id: 'req3',
+        userId: 'user3',
+        userEmail: 'recruiter@techcorp.com',
+        requestedRole: VALID_ROLES.RECRUITER,
+        status: 'pending',
+        createdAt: new Date('2024-09-26'),
+        additionalInfo: {
+          name: 'Sarah Johnson',
+          company: 'TechCorp Solutions',
+          position: 'HR Manager',
+          companySize: '500+ employees'
+        }
+      },
+      {
+        id: 'req4',
+        userId: 'user4',
+        userEmail: 'dr.patel@university.edu',
+        requestedRole: VALID_ROLES.FACULTY,
+        status: 'pending',
+        createdAt: new Date('2024-09-25'),
+        additionalInfo: {
+          name: 'Dr. Raj Patel',
+          department: 'Computer Science',
+          position: 'Assistant Professor',
+          experience: '8 years'
+        }
+      },
+      {
+        id: 'req5',
+        userId: 'user5',
+        userEmail: 'alex.kumar@university.edu',
+        requestedRole: VALID_ROLES.STUDENT,
+        status: 'pending',
+        createdAt: new Date('2024-09-24'),
+        additionalInfo: {
+          name: 'Alex Kumar',
+          studentId: 'ME2021078',
+          department: 'Mechanical Engineering',
+          year: '2nd Year'
+        }
       }
-    };
+    ];
 
-    fetchRequests();
-    
-    // Refresh requests every 30 seconds
-    const interval = setInterval(fetchRequests, 30000);
-    return () => clearInterval(interval);
+    // Simulate loading delay
+    setTimeout(() => {
+      setRequests(fakeRequests);
+      setLoading(false);
+    }, 1000);
   }, [canAccess, currentUser]);
 
   const handleApprove = async (requestId, userId, requestedRole) => {

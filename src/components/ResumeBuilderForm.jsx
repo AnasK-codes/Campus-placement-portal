@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import resumeParser from '../utils/resumeParser';
 import { SkillBadgesGrid } from './SkillBadge';
 
@@ -200,6 +201,7 @@ const ActionButton = styled(motion.button)`
 
 const ResumeBuilderForm = ({ onResumeUpdate, initialData = null }) => {
   const { currentUser } = useAuth();
+  const { addNotification } = useNotifications();
   const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
@@ -248,14 +250,34 @@ const ResumeBuilderForm = ({ onResumeUpdate, initialData = null }) => {
       
       setExtractedSkills(parsedData.skills);
       
+      // Save the parsed data and the file
+      await resumeParser.saveResumeData(currentUser.uid, {
+        ...formData,
+        ...parsedData.contactInfo,
+        skills: [...formData.skills, ...parsedData.skills],
+      }, file);
+
       setFormData(prev => ({
         ...prev,
         ...parsedData.contactInfo,
         skills: [...prev.skills, ...parsedData.skills]
       }));
 
+      addNotification({
+        type: 'success',
+        title: 'Resume Uploaded & Parsed!',
+        message: 'Your resume has been successfully processed and saved.',
+        duration: 5000
+      });
+
     } catch (error) {
       console.error('Error processing resume:', error);
+      addNotification({
+        type: 'error',
+        title: 'Upload Failed',
+        message: 'There was an error processing your resume. Please try again.',
+        duration: 5000
+      });
     } finally {
       setIsExtracting(false);
     }
@@ -287,9 +309,38 @@ const ResumeBuilderForm = ({ onResumeUpdate, initialData = null }) => {
 
   const handleSave = async () => {
     try {
-      await resumeParser.saveResumeData(currentUser.uid, formData);
+      // Simulate saving to localStorage for demo purposes
+      const resumeData = {
+        ...formData,
+        userId: currentUser.uid,
+        savedAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem(`resume_${currentUser.uid}`, JSON.stringify(resumeData));
+      
+      // Use alert as fallback if addNotification is not available
+      if (typeof addNotification === 'function') {
+        addNotification({
+          type: 'success',
+          title: 'Resume Saved!',
+          message: 'Your resume has been successfully saved to local storage.',
+          duration: 5000
+        });
+      } else {
+        alert('✅ Resume Saved!\n\nYour resume has been successfully saved to local storage.');
+      }
     } catch (error) {
       console.error('Error saving resume:', error);
+      if (typeof addNotification === 'function') {
+        addNotification({
+          type: 'error',
+          title: 'Save Failed',
+          message: 'There was an error saving your resume. Please try again.',
+          duration: 5000
+        });
+      } else {
+        alert('❌ Save Failed\n\nThere was an error saving your resume. Please try again.');
+      }
     }
   };
 

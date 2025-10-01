@@ -317,62 +317,133 @@ const RecommendedInternships = () => {
 
     const loadData = async () => {
       try {
-        // Load student profile
-        const userDoc = await getDocs(query(
-          collection(db, 'users'),
-          where('uid', '==', currentUser.uid)
-        ));
+        // Create fake student profile if none exists
+        const fakeProfile = {
+          uid: currentUser.uid,
+          name: currentUser.displayName || 'Student User',
+          email: currentUser.email,
+          skills: ['JavaScript', 'React', 'Node.js', 'Python'],
+          education: 'Computer Science',
+          experience: 'Beginner'
+        };
+        setStudentProfile(fakeProfile);
+
+        // Create fake internships data
+        const fakeInternships = [
+          {
+            id: 'intern1',
+            title: 'Frontend Developer Intern',
+            company: 'TechCorp Solutions',
+            location: 'Bangalore, India',
+            duration: '3 months',
+            stipend: '₹25,000/month',
+            stipendMax: 25000,
+            description: 'Work on React.js applications and modern web technologies',
+            requirements: ['React', 'JavaScript', 'HTML', 'CSS'],
+            availableSeats: 5,
+            status: 'active',
+            createdAt: new Date()
+          },
+          {
+            id: 'intern2',
+            title: 'Full Stack Developer Intern',
+            company: 'Innovation Labs',
+            location: 'Mumbai, India',
+            duration: '6 months',
+            stipend: '₹30,000/month',
+            stipendMax: 30000,
+            description: 'Build end-to-end web applications using MERN stack',
+            requirements: ['React', 'Node.js', 'MongoDB', 'Express'],
+            availableSeats: 3,
+            status: 'active',
+            createdAt: new Date()
+          },
+          {
+            id: 'intern3',
+            title: 'Python Developer Intern',
+            company: 'DataTech Analytics',
+            location: 'Hyderabad, India',
+            duration: '4 months',
+            stipend: '₹22,000/month',
+            stipendMax: 22000,
+            description: 'Develop data analysis tools and automation scripts',
+            requirements: ['Python', 'Django', 'SQL', 'Data Analysis'],
+            availableSeats: 4,
+            status: 'active',
+            createdAt: new Date()
+          },
+          {
+            id: 'intern4',
+            title: 'Mobile App Developer Intern',
+            company: 'AppVenture Studios',
+            location: 'Pune, India',
+            duration: '5 months',
+            stipend: '₹28,000/month',
+            stipendMax: 28000,
+            description: 'Create cross-platform mobile applications',
+            requirements: ['React Native', 'JavaScript', 'Mobile Development'],
+            availableSeats: 2,
+            status: 'active',
+            createdAt: new Date()
+          },
+          {
+            id: 'intern5',
+            title: 'UI/UX Design Intern',
+            company: 'Creative Minds Agency',
+            location: 'Delhi, India',
+            duration: '3 months',
+            stipend: '₹20,000/month',
+            stipendMax: 20000,
+            description: 'Design user interfaces and improve user experience',
+            requirements: ['Figma', 'Adobe XD', 'UI Design', 'UX Research'],
+            availableSeats: 3,
+            status: 'active',
+            createdAt: new Date()
+          }
+        ];
+
+        setInternships(fakeInternships);
+
+        // Generate fake AI recommendations with match scores
+        const fakeRecommendations = fakeInternships.map((internship, index) => {
+          const matchScores = [92, 85, 78, 65, 58];
+          return {
+            ...internship,
+            matchScore: matchScores[index],
+            matchReasons: [
+              'Strong skill alignment with your profile',
+              'Company culture matches your preferences',
+              'Location preference match'
+            ],
+            skillGaps: index > 2 ? ['Advanced algorithms', 'System design'] : [],
+            applied: false
+          };
+        });
+
+        setRecommendations(fakeRecommendations);
+
+        // Set fake AI insights
+        setAiInsights([
+          {
+            type: 'excellent_opportunity',
+            message: 'TechCorp Solutions internship has 92% match with your skills!'
+          },
+          {
+            type: 'skill_development',
+            message: 'Consider learning System Design to improve your match scores'
+          }
+        ]);
+
+        // Calculate stats
+        const newStats = {
+          total: fakeRecommendations.length,
+          excellent: fakeRecommendations.filter(r => r.matchScore >= 80).length,
+          good: fakeRecommendations.filter(r => r.matchScore >= 60 && r.matchScore < 80).length,
+          moderate: fakeRecommendations.filter(r => r.matchScore >= 40 && r.matchScore < 60).length
+        };
+        setStats(newStats);
         
-        if (!userDoc.empty) {
-          const profile = userDoc.docs[0].data();
-          setStudentProfile(profile);
-
-          // Load active internships
-          const internshipsQuery = query(
-            collection(db, 'internships'),
-            where('status', '==', 'active'),
-            orderBy('createdAt', 'desc')
-          );
-
-          const unsubscribe = onSnapshot(internshipsQuery, async (snapshot) => {
-            const internshipsList = [];
-            snapshot.forEach((doc) => {
-              internshipsList.push({ id: doc.id, ...doc.data() });
-            });
-
-            setInternships(internshipsList);
-
-            // Generate AI recommendations
-            if (profile && internshipsList.length > 0) {
-              const recommendationResults = await aiRecommendationEngine.generateRecommendations(
-                profile,
-                internshipsList,
-                {
-                  maxRecommendations: 20,
-                  minMatchScore: 20,
-                  includeSkillGaps: true,
-                  prioritizeConversion: true
-                }
-              );
-
-              setRecommendations(recommendationResults.recommendations || []);
-              setAiInsights(recommendationResults.aiInsights || null);
-              
-              // Calculate stats
-              const newStats = {
-                total: recommendationResults.recommendations?.length || 0,
-                excellent: recommendationResults.recommendations?.filter(r => r.matchScore >= 80).length || 0,
-                good: recommendationResults.recommendations?.filter(r => r.matchScore >= 60 && r.matchScore < 80).length || 0,
-                moderate: recommendationResults.recommendations?.filter(r => r.matchScore >= 40 && r.matchScore < 60).length || 0
-              };
-              setStats(newStats);
-            }
-            
-            setLoading(false);
-          });
-
-          return () => unsubscribe();
-        }
+        setLoading(false);
       } catch (error) {
         console.error('Error loading recommendations:', error);
         setLoading(false);

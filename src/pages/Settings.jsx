@@ -81,7 +81,7 @@ const ToggleSwitch = styled.div`
   position: relative;
   width: 50px;
   height: 24px;
-  background: ${({ active, theme }) => active ? theme.colors.primary : theme.colors.border};
+  background: ${({ $active, theme }) => $active ? theme.colors.primary : theme.colors.border};
   border-radius: 12px;
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
@@ -90,7 +90,7 @@ const ToggleSwitch = styled.div`
     content: '';
     position: absolute;
     top: 2px;
-    left: ${({ active }) => active ? '26px' : '2px'};
+    left: ${({ $active }) => $active ? '26px' : '2px'};
     width: 20px;
     height: 20px;
     background: white;
@@ -152,7 +152,7 @@ const Settings = () => {
               </SettingDescription>
             </SettingInfo>
             <ToggleSwitch 
-              active={isDarkMode} 
+              $active={isDarkMode} 
               onClick={toggleTheme}
             />
           </SettingItem>
@@ -168,7 +168,7 @@ const Settings = () => {
               </SettingDescription>
             </SettingInfo>
             <ToggleSwitch 
-              active={notifications} 
+              $active={notifications} 
               onClick={() => setNotifications(!notifications)}
             />
           </SettingItem>
@@ -180,7 +180,7 @@ const Settings = () => {
               </SettingDescription>
             </SettingInfo>
             <ToggleSwitch 
-              active={emailUpdates} 
+              $active={emailUpdates} 
               onClick={() => setEmailUpdates(!emailUpdates)}
             />
           </SettingItem>

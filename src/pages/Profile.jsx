@@ -63,33 +63,35 @@ const InfoLabel = styled.span`
   font-weight: 500;
   color: ${({ theme }) => theme.colors.textSecondary};
 `;
-
 const InfoValue = styled.span`
   font-size: 1rem;
   color: ${({ theme }) => theme.colors.text};
-`;
-
-const RoleBadge = styled.span`
-  display: inline-flex;
-  align-items: center;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
 `;
 
 const StatusBadge = styled.span`
   display: inline-flex;
   align-items: center;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  background: ${({ approved }) => approved ? '#10B981' : '#F59E0B'};
-  color: white;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   font-size: 0.8rem;
   font-weight: 600;
+  text-transform: uppercase;
+  background: ${({ $approved }) => $approved ? '#E8F5E8' : '#FFF3E0'};
+  color: ${({ $approved }) => $approved ? '#2E7D32' : '#F57C00'};
+  border: 1px solid ${({ $approved }) => $approved ? '#4CAF50' : '#FF9800'};
+`;
+
+const RoleBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: ${({ theme }) => theme.colors.primary}20;
+  color: ${({ theme }) => theme.colors.primary};
+  border: 1px solid ${({ theme }) => theme.colors.primary};
 `;
 
 const EditButton = styled(motion.button)`
@@ -414,7 +416,7 @@ const Profile = () => {
             <InfoItem>
               <InfoLabel>Account Status</InfoLabel>
               <InfoValue>
-                <StatusBadge approved={userProfile.approved}>
+                <StatusBadge $approved={userProfile.approved}>
                   {userProfile.approved ? 'Approved' : 'Pending'}
                 </StatusBadge>
               </InfoValue>

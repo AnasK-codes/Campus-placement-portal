@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import GlobalStyles from './styles/GlobalStyles';
 
 // Components
@@ -43,7 +44,8 @@ function App() {
     <ThemeProvider>
       <GlobalStyles />
       <AuthProvider>
-        <Router>
+        <NotificationProvider>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <div id="root">
             <Navbar />
             <main>
@@ -222,7 +224,8 @@ function App() {
             </main>
             <Footer />
           </div>
-        </Router>
+          </Router>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );
